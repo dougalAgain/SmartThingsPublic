@@ -30,7 +30,7 @@
  
  
 metadata {
-	definition (name: "Eurotronics Spirit TRV", namespace: "dougalAgain", author: "Ed Cann") {
+	definition (name: "Eurotronic Spirit TRV", namespace: "dougalAgain", author: "Ed Cann") {
 		capability "Actuator"
 		capability "Sensor"
 		capability "Thermostat"
