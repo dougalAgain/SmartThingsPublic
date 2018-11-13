@@ -84,7 +84,7 @@ metadata {
 			}
 
 			tileAttribute("device.heatingSetpoint", key: "HEATING_SETPOINT") {
-				attributeState "default", label:'${currentValue}', unit:"°C"
+				attributeState "default", label:'${currentValue}°', unit:"dC"
 			}
 		}
 
@@ -101,6 +101,10 @@ metadata {
         valueTile("temperature", "device.temperature", inactiveLabel: false, height: 2, width: 2,
                 decoration: "flat") {
                 state "temperature", label:'${currentValue} °C', backgroundColor:"#d04e00", icon: "st.thermostat.heat"
+        }
+        valueTile("heatingSetpoint", "device.heatingSetpoint", inactiveLabel: false, height: 2, width: 2,
+                decoration: "flat") {
+                state "heatingSetpoint", label:'${currentValue} °C', backgroundColor:"#d04e00", icon: "st.thermostat.heat"
         }
         standardTile("refresh", "command.refresh", inactiveLabel: false, height: 2, width: 2,
                      decoration: "flat") {
@@ -233,13 +237,13 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatmodev2.ThermostatModeRepor
 
 def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpointReport cmd) {
 	//	Parsed ThermostatSetpointReport(precision: 2, reserved01: 0, scale: 0, scaledValue: 21.00, setpointType: 1, size: 2, value: [8, 52])
-    //log.debug "ThermostatSetpoint. cmd:${cmd}"
+    log.debug "ThermostatSetpoint. cmd:${cmd}"
     if(cmd.setpointType == 1) { //thisis the standard heating setpoint
         def radiatorSetPoint = cmd.scaledValue
         sendEvent(name:"nextHeatingSetpoint", value: radiatorSetPoint, unit: getTemperatureScale(), displayed: false)
+        sendEvent(name:"heatingSetpoint", value: radiatorSetPoint.toString(), unit: getTemperatureScale(), displayed: true)
     }
     cmd
-
 }
 
 def temperatureUp() {
@@ -364,11 +368,11 @@ def refresh() {
                 zwave.configurationV1.configurationSet(configurationValue:  backlight == "Yes" ? [0x01] : [0x00], parameterNumber:3, size:1, scaledConfigurationValue:  backlight == "Yes" ? 0x01 : 0x00),
                 zwave.configurationV1.configurationSet(configurationValue:  windowOpen == "Low" ? [0x01] : windowOpen == "Medium" ? [0x02] : windowOpen == "High" ? [0x03] : [0x00], parameterNumber:7, size:1, scaledConfigurationValue:  windowOpen == "Low" ? 0x01 : windowOpen == "Disabled" ? 0x00 : windowOpen == "High" ? 0x03 : 0x02),
                 zwave.configurationV1.configurationSet(configurationValue: tempOffset == null ? [0] : [tempOffset*10], parameterNumber:8, size:1, scaledConfigurationValue: tempOffset == null ? 0 : tempOffset*10),
-                zwave.thermostatSetpointV2.thermostatSetpointSet(precision: 1, reserved01: 0, scale: 0, scaledValue: ecoTemp == null ? 8 : ecoTemp, setpointType: 11, size: 2, value: ecoTemp == null ? [0, 80] : [0, ecoTemp*10]),
+                zwave.thermostatSetpointV1.thermostatSetpointSet(precision: 1, reserved01: 0, scale: 0, scaledValue: ecoTemp == null ? 8 : ecoTemp, setpointType: 11, size: 2, value: ecoTemp == null ? [0, 80] : [0, ecoTemp*10]),
                 zwave.sensorMultilevelV5.sensorMultilevelGet(sensorType:1, scale:1),  // get temp
                 zwave.thermostatModeV2.thermostatModeGet(),
-                zwave.thermostatSetpointV2.thermostatSetpointGet(setpointType: 0x01),
-                zwave.thermostatSetpointV2.thermostatSetpointGet(setpointType: 0x0B),
+                zwave.thermostatSetpointV1.thermostatSetpointGet(setpointType: 0x01),
+                zwave.thermostatSetpointV1.thermostatSetpointGet(setpointType: 0x0B),
                 zwave.configurationV1.configurationGet(parameterNumber:1),
                 zwave.configurationV1.configurationGet(parameterNumber:2),
                 zwave.configurationV1.configurationGet(parameterNumber:3),
@@ -406,8 +410,8 @@ def poll() {
 	secureSequence([
                 zwave.sensorMultilevelV5.sensorMultilevelGet(sensorType:1, scale:1),  // get temp
                 zwave.thermostatModeV2.thermostatModeGet(),
-                zwave.thermostatSetpointV2.thermostatSetpointGet(setpointType: 0x01),
-                zwave.thermostatSetpointV2.thermostatSetpointGet(setpointType: 0x0B),
+                zwave.thermostatSetpointV1.thermostatSetpointGet(setpointType: 0x01),
+                zwave.thermostatSetpointV1.thermostatSetpointGet(setpointType: 0x0B),
                 zwave.configurationV1.configurationGet(parameterNumber:1),
                 zwave.configurationV1.configurationGet(parameterNumber:2),
                 zwave.configurationV1.configurationGet(parameterNumber:3),
@@ -428,6 +432,6 @@ private secure(physicalgraph.zwave.Command cmd) {
 	zwave.securityV1.securityMessageEncapsulation().encapsulate(cmd).format()
 }
 
-private secureSequence(commands, delay=200) {
+private secureSequence(commands, delay=500) {
 	delayBetween(commands.collect{ secure(it) }, delay)
 }
