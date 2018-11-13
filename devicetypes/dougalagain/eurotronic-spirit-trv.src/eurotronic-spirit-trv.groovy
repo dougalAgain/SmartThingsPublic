@@ -237,7 +237,7 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatmodev2.ThermostatModeRepor
 
 def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpointReport cmd) {
 	//	Parsed ThermostatSetpointReport(precision: 2, reserved01: 0, scale: 0, scaledValue: 21.00, setpointType: 1, size: 2, value: [8, 52])
-    log.debug "ThermostatSetpoint. cmd:${cmd}"
+    //	log.debug "ThermostatSetpoint. cmd:${cmd}"
     if(cmd.setpointType == 1) { //thisis the standard heating setpoint
         def radiatorSetPoint = cmd.scaledValue
         sendEvent(name:"nextHeatingSetpoint", value: radiatorSetPoint, unit: getTemperatureScale(), displayed: false)
