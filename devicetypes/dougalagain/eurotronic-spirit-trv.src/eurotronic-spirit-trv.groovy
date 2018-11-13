@@ -273,6 +273,7 @@ def setHeatingSetpoint(degrees) {
     def valueDegrees = degrees*10
     secureSequence([
         zwave.thermostatSetpointV1.thermostatSetpointSet (precision: 1, scale: 0, scaledValue: degrees, setpointType: 1, size: 2, value: [0, valueDegrees.toInteger()]),
+        zwave.thermostatSetpointV1.thermostatSetpointGet(setpointType: 0x01),
     ])
 }
 
